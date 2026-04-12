@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { EntryForm } from './components/EntryForm';
 import { TaskList } from './components/TaskList';
 import { ReportPreview } from './components/ReportPreview';
