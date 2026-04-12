@@ -1,4 +1,4 @@
-import { TaskInput, ParsedTask, GroupedTask, DateGroup } from './types';
+import type { TaskInput, ParsedTask, GroupedTask, DateGroup } from './types';
 
 function parseTimeToMinutes(timeStr: string): number {
   if (!timeStr) return 0;
