@@ -1,4 +1,7 @@
+"$schema" = "./node_modules/wrangler/config-schema.json"
+
 name = "nippou-builder"
+pages_build_output_dir = "./dist"
 compatibility_date = "2025-09-15"
 
 [[d1_databases]]

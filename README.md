@@ -37,6 +37,17 @@ npm run dev
 npm run cf:dev
 ```
 
+6. Wrangler で Pages へ直接デプロイする場合は以下です。
+
+```bash
+npm run cf:deploy
+```
+
+Cloudflare Pages のビルド設定をダッシュボードで使う場合は、`wrangler deploy` ではなく以下にしてください。
+
+- Build command: `npm run build`
+- Build output directory: `dist`
+
 ## 同期仕様
 
 - 同じ共有コードを入力した端末同士で同じタスクリストを共有します。
