@@ -4,4 +4,4 @@ compatibility_date = "2025-09-15"
 [[d1_databases]]
 binding = "DB"
 database_name = "nippou-builder-db"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "49c30d41-2b6b-4405-b66b-9cb3b56235c9"
