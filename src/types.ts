@@ -6,6 +6,13 @@ export type TaskInput = {
   content: string;
 };
 
+export type SyncStatus = 'disconnected' | 'connecting' | 'connected' | 'syncing';
+
+export type SyncTasksResponse = {
+  tasks: TaskInput[];
+  lastSyncedAt: string | null;
+};
+
 export type ParsedTask = {
   originalId: string;
   logicalDate: string;

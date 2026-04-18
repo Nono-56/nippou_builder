@@ -1,73 +1,45 @@
-# React + TypeScript + Vite
+# Nippou Builder
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Cloudflare Pages 上で動作する日報補助アプリです。フロントエンドは Astro + React、同期 API は Cloudflare Pages Functions、永続化は D1 を使います。
 
-Currently, two official plugins are available:
+## できること
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- タスクの追加と削除
+- 日報用テキストの自動整形
+- 共有コードを使った複数端末間同期
+- Cloudflare Pages 上での静的配信 + Functions API 同居
 
-## React Compiler
+## セットアップ
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1. 依存関係をインストールします。
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+2. `wrangler.toml` の `database_id` を自分の D1 Database ID に置き換えます。
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+3. ローカル D1 を初期化します。
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run db:migrate:local
 ```
+
+4. フロントエンドだけを確認する場合は以下です。
+
+```bash
+npm run dev
+```
+
+5. Pages Functions + D1 を含めて確認する場合は以下です。
+
+```bash
+npm run cf:dev
+```
+
+## 同期仕様
+
+- 同じ共有コードを入力した端末同士で同じタスクリストを共有します。
+- 同期接続後はサーバー側のタスク一覧が正本になります。
+- 同期中は 10 秒ごと、およびタブ復帰時に再同期します。
+- 共有コードそのものは保存せず、サーバー側ではハッシュ化して扱います。
