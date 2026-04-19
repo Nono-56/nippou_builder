@@ -1,0 +1,20 @@
+---
+export const prerender = false;
+import '../../index.css';
+import UserApp from '../../UserApp.tsx';
+
+const { username } = Astro.params;
+---
+
+<html lang="ja">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="generator" content={Astro.generator} />
+		<title>Nippou Builder — @{username} (PC)</title>
+	</head>
+	<body>
+		<UserApp client:load username={username} useCustomPicker={true} />
+	</body>
+</html>

@@ -24,6 +24,7 @@
   },
   "homepage": "https://github.com/Nono-56/nippou_builder#readme",
   "dependencies": {
+    "@astrojs/cloudflare": "^13.1.10",
     "@astrojs/react": "^5.0.3",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",

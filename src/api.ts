@@ -50,3 +50,47 @@ export function removeTask(syncCode: string, taskId: string): Promise<SyncTasksR
     method: 'DELETE',
   });
 }
+
+// --- Username-based API ---
+
+export function fetchTasksByUsername(username: string): Promise<SyncTasksResponse> {
+  return request<SyncTasksResponse>(`/api/u/${encodeURIComponent(username)}/tasks`);
+}
+
+export function createTaskByUsername(username: string, task: TaskInput): Promise<SyncTasksResponse> {
+  return request<SyncTasksResponse>(`/api/u/${encodeURIComponent(username)}/tasks`, {
+    method: 'POST',
+    body: { task },
+  });
+}
+
+export function removeTaskByUsername(username: string, taskId: string): Promise<SyncTasksResponse> {
+  return request<SyncTasksResponse>(`/api/u/${encodeURIComponent(username)}/tasks/${encodeURIComponent(taskId)}`, {
+    method: 'DELETE',
+  });
+}
+
+// --- User management API ---
+
+export type UserRecord = {
+  id: string;
+  username: string;
+  createdAt: string;
+};
+
+export function fetchUsers(): Promise<{ users: UserRecord[] }> {
+  return request<{ users: UserRecord[] }>('/api/users');
+}
+
+export function createUser(username: string): Promise<{ user: UserRecord }> {
+  return request<{ user: UserRecord }>('/api/users', {
+    method: 'POST',
+    body: { username },
+  });
+}
+
+export function deleteUser(username: string): Promise<{ success: boolean }> {
+  return request<{ success: boolean }>(`/api/users/${encodeURIComponent(username)}`, {
+    method: 'DELETE',
+  });
+}

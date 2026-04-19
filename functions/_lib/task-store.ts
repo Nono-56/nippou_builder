@@ -13,6 +13,12 @@ export type SyncTasksResponse = {
   lastSyncedAt: string | null;
 };
 
+export type UserRecord = {
+  id: string;
+  username: string;
+  createdAt: string;
+};
+
 export interface Env {
   DB: D1Database;
 }
@@ -30,12 +36,22 @@ type SpaceRow = {
   updated_at: string;
 };
 
+type UserRow = {
+  id: string;
+  username: string;
+  created_at: string;
+};
+
 function json(data: unknown, status = 200): Response {
   return Response.json(data, { status });
 }
 
 export function badRequest(message: string): Response {
   return json({ error: message }, 400);
+}
+
+export function notFound(message: string): Response {
+  return json({ error: message }, 404);
 }
 
 export function serverError(message: string): Response {
@@ -67,6 +83,14 @@ export function validateSyncCode(syncCode: unknown): string | null {
   if (typeof syncCode !== 'string') return null;
   const normalized = normalizeSyncCode(syncCode);
   if (normalized.length < 3 || normalized.length > 64) return null;
+  return normalized;
+}
+
+export function validateUsername(username: unknown): string | null {
+  if (typeof username !== 'string') return null;
+  const normalized = username.trim().toLowerCase();
+  // alphanumeric + hyphen/underscore, 3-32 chars
+  if (!/^[a-z0-9_-]{3,32}$/.test(normalized)) return null;
   return normalized;
 }
 
@@ -133,6 +157,12 @@ export async function requireSpace(env: Env, syncCode: string): Promise<SpaceRow
     .first<SpaceRow>();
 }
 
+async function requireSpaceByUsername(env: Env, username: string): Promise<SpaceRow | null> {
+  return env.DB.prepare('SELECT id, updated_at FROM sync_spaces WHERE username = ?')
+    .bind(username)
+    .first<SpaceRow>();
+}
+
 export async function listTasks(env: Env, spaceId: string): Promise<TaskRecord[]> {
   const result = await env.DB.prepare(
     `SELECT id, date, start_time, end_time, content
@@ -177,8 +207,30 @@ export async function fetchSpaceTasks(env: Env, syncCode: string): Promise<SyncT
   return buildSyncResponse(env, space.id, space.updated_at);
 }
 
+export async function fetchSpaceTasksByUsername(env: Env, username: string): Promise<SyncTasksResponse | null> {
+  const space = await requireSpaceByUsername(env, username);
+  if (!space) return null;
+  return buildSyncResponse(env, space.id, space.updated_at);
+}
+
 export async function insertTask(env: Env, syncCode: string, task: TaskRecord): Promise<SyncTasksResponse> {
   const space = await getOrCreateSpace(env, syncCode);
+  const now = new Date().toISOString();
+
+  await env.DB.prepare(
+    `INSERT INTO tasks (id, space_id, date, start_time, end_time, content, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+  )
+    .bind(task.id, space.id, task.date, task.startTime, task.endTime, task.content, now, now)
+    .run();
+
+  const lastSyncedAt = await touchSpace(env, space.id);
+  return buildSyncResponse(env, space.id, lastSyncedAt);
+}
+
+export async function insertTaskByUsername(env: Env, username: string, task: TaskRecord): Promise<SyncTasksResponse | null> {
+  const space = await requireSpaceByUsername(env, username);
+  if (!space) return null;
   const now = new Date().toISOString();
 
   await env.DB.prepare(
@@ -199,6 +251,57 @@ export async function deleteTask(env: Env, syncCode: string, taskId: string): Pr
   await env.DB.prepare('DELETE FROM tasks WHERE id = ? AND space_id = ?').bind(taskId, space.id).run();
   const lastSyncedAt = await touchSpace(env, space.id);
   return buildSyncResponse(env, space.id, lastSyncedAt);
+}
+
+export async function deleteTaskByUsername(env: Env, username: string, taskId: string): Promise<SyncTasksResponse | null> {
+  const space = await requireSpaceByUsername(env, username);
+  if (!space) return null;
+
+  await env.DB.prepare('DELETE FROM tasks WHERE id = ? AND space_id = ?').bind(taskId, space.id).run();
+  const lastSyncedAt = await touchSpace(env, space.id);
+  return buildSyncResponse(env, space.id, lastSyncedAt);
+}
+
+// --- User management ---
+
+export async function listUsers(env: Env): Promise<UserRecord[]> {
+  const result = await env.DB.prepare(
+    'SELECT id, username, created_at FROM sync_spaces WHERE username IS NOT NULL ORDER BY created_at ASC',
+  ).all<UserRow>();
+
+  return (result.results ?? []).map((row) => ({
+    id: row.id,
+    username: row.username,
+    createdAt: row.created_at,
+  }));
+}
+
+export async function createUser(env: Env, username: string): Promise<UserRecord | null> {
+  const existing = await env.DB.prepare('SELECT id FROM sync_spaces WHERE username = ?')
+    .bind(username)
+    .first<{ id: string }>();
+
+  if (existing) return null;
+
+  const now = new Date().toISOString();
+  const id = crypto.randomUUID();
+  const codeHash = await hashSyncCode(username);
+
+  await env.DB.prepare(
+    'INSERT INTO sync_spaces (id, code_hash, username, created_at, updated_at) VALUES (?, ?, ?, ?, ?)',
+  )
+    .bind(id, codeHash, username, now, now)
+    .run();
+
+  return { id, username, createdAt: now };
+}
+
+export async function deleteUser(env: Env, username: string): Promise<boolean> {
+  const result = await env.DB.prepare('DELETE FROM sync_spaces WHERE username = ?')
+    .bind(username)
+    .run();
+
+  return (result.meta?.changes ?? 0) > 0;
 }
 
 export { json };
