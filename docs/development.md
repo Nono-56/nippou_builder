@@ -80,7 +80,15 @@ DBスキーマの変更は `migrations/` にSQLファイルを追加して管理
 
 ```
 migrations/
-└── 0001_init.sql   # 初期スキーマ（sync_spaces, tasks テーブル）
+├── 0001_init.sql           # 初期スキーマ（sync_spaces, tasks テーブル）
+└── 0002_add_username.sql   # sync_spaces に username カラム追加（ユーザーモード対応）
 ```
 
-新しいマイグレーションファイルは連番で追加してください（`0002_xxx.sql` など）。
+新しいマイグレーションファイルは連番で追加してください（`0003_xxx.sql` など）。
+
+### 本番DBへのマイグレーション適用
+
+```bash
+wrangler d1 execute nippou-builder-db --file=migrations/0001_init.sql
+wrangler d1 execute nippou-builder-db --file=migrations/0002_add_username.sql
+```
