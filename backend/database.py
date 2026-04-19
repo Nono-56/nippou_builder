@@ -92,6 +92,23 @@ def _touch_space(conn, space_id: str) -> str:
     return now
 
 
+def _get_or_create_username_space(conn, username: str) -> tuple[str, str]:
+    row = conn.execute(
+        "SELECT id, updated_at FROM sync_spaces WHERE username = ?", (username,)
+    ).fetchone()
+    if row:
+        return row["id"], row["updated_at"]
+
+    now = get_now()
+    space_id = str(uuid.uuid4())
+    code_hash = hash_sync_code(username)
+    conn.execute(
+        "INSERT INTO sync_spaces (id, code_hash, username, created_at, updated_at) VALUES (?,?,?,?,?)",
+        (space_id, code_hash, username, now, now),
+    )
+    return space_id, now
+
+
 # ── Sync-code-based operations ─────────────────────────────────
 
 def get_or_create_space(sync_code: str) -> dict:
@@ -172,24 +189,15 @@ def delete_task_by_code(sync_code: str, task_id: str) -> Optional[dict]:
 
 def require_space_by_username(username: str) -> Optional[dict]:
     with get_conn() as conn:
-        row = conn.execute(
-            "SELECT id, updated_at FROM sync_spaces WHERE username = ?", (username,)
-        ).fetchone()
-        if not row:
-            return None
-        tasks = _list_tasks(conn, row["id"])
-        return {"tasks": tasks, "lastSyncedAt": row["updated_at"]}
+        space_id, updated_at = _get_or_create_username_space(conn, username)
+        tasks = _list_tasks(conn, space_id)
+        return {"tasks": tasks, "lastSyncedAt": updated_at}
 
 
 def insert_task_by_username(username: str, task: dict) -> Optional[dict]:
     now = get_now()
     with get_conn() as conn:
-        row = conn.execute(
-            "SELECT id FROM sync_spaces WHERE username = ?", (username,)
-        ).fetchone()
-        if not row:
-            return None
-        space_id = row["id"]
+        space_id, _ = _get_or_create_username_space(conn, username)
         conn.execute(
             """INSERT INTO tasks
                (id, space_id, date, start_time, end_time, content, created_at, updated_at)

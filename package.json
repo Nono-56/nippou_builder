@@ -5,10 +5,13 @@
   "main": "index.js",
   "scripts": {
     "dev": "astro dev",
+    "dev:5001": "astro dev --host 127.0.0.1 --port 5001",
     "build": "astro build",
     "preview": "astro preview",
-    "cf:dev": "astro build && wrangler pages dev ./dist",
+    "cf:dev": "astro build && node ./scripts/clear-wrangler-deploy.cjs && wrangler pages dev ./dist",
+    "cf:dev:5001": "astro build && node ./scripts/clear-wrangler-deploy.cjs && wrangler pages dev ./dist --ip 127.0.0.1 --port 5001",
     "cf:deploy": "astro build && wrangler pages deploy ./dist",
+    "tunnel:quick": "cloudflared tunnel --url http://localhost:5001",
     "db:migrate:local": "wrangler d1 execute nippou-builder-db --local --file=./migrations/0001_init.sql && wrangler d1 execute nippou-builder-db --local --file=./migrations/0002_add_username.sql",
     "db:migrate:remote": "wrangler d1 execute nippou-builder-db --file=./migrations/0001_init.sql && wrangler d1 execute nippou-builder-db --file=./migrations/0002_add_username.sql",
     "test": "echo \"No automated tests configured\""

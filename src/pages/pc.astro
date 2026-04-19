@@ -1,6 +1,6 @@
 ---
 import '../index.css';
-import App from '../App.tsx';
+import UserApp from '../UserApp.tsx';
 ---
 
 <html lang="ja">
@@ -12,6 +12,6 @@ import App from '../App.tsx';
 		<title>Nippou Builder (PC)</title>
 	</head>
 	<body>
-		<App client:load useCustomPicker={true} />
+		<UserApp client:load username="owner" useCustomPicker={true} showUsername={false} />
 	</body>
 </html>

@@ -9,6 +9,7 @@ import type { SyncStatus, TaskInput } from './types';
 type UserAppProps = {
   username: string;
   useCustomPicker?: boolean;
+  showUsername?: boolean;
 };
 
 function SyncIndicator({ status, lastSyncedAt }: { status: SyncStatus; lastSyncedAt: string | null }) {
@@ -28,7 +29,7 @@ function SyncIndicator({ status, lastSyncedAt }: { status: SyncStatus; lastSynce
   );
 }
 
-function UserApp({ username, useCustomPicker = false }: UserAppProps) {
+function UserApp({ username, useCustomPicker = false, showUsername = true }: UserAppProps) {
   const [tasks, setTasks] = useState<TaskInput[]>([]);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('connecting');
   const [syncError, setSyncError] = useState<string | null>(null);
@@ -112,9 +113,13 @@ function UserApp({ username, useCustomPicker = false }: UserAppProps) {
           <BookOpenText className="inline-block mr-2 align-text-bottom text-blue-400" size={36} />
           Nippou Builder
         </h1>
-        <p style={{ marginBottom: '0.25rem' }}>
-          <span style={{ fontWeight: 600, color: '#a78bfa' }}>@{username}</span>
-        </p>
+        {showUsername ? (
+          <p style={{ marginBottom: '0.25rem' }}>
+            <span style={{ fontWeight: 600, color: '#a78bfa' }}>@{username}</span>
+          </p>
+        ) : (
+          <p style={{ marginBottom: '0.25rem' }}>Personal workspace</p>
+        )}
         <SyncIndicator status={syncStatus} lastSyncedAt={lastSyncedAt} />
 
         <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center' }}>

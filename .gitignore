@@ -11,7 +11,9 @@ node_modules
 dist
 dist-ssr
 *.local
+.env
 .astro
+.wrangler/
 
 # Editor directories and files
 .vscode/*
@@ -24,3 +26,5 @@ dist-ssr
 *.sln
 *.sw?
 .astro
+data/*.db
+data/*.db-*

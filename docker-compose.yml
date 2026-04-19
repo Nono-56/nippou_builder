@@ -8,7 +8,7 @@ services:
     environment:
       - DB_PATH=/data/nippou.db
     volumes:
-      - sqlite_data:/data
+      - ./data:/data
     expose:
       - "8000"
     healthcheck:
@@ -24,10 +24,16 @@ services:
     container_name: nippou_nginx
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "${APP_PORT:-8080}:80"
     depends_on:
       backend:
         condition: service_healthy
 
-volumes:
-  sqlite_data:
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: nippou_cloudflared
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      nginx:
+        condition: service_started
