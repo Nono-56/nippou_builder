@@ -147,6 +147,15 @@ function getWeekStartDate(logicalDate: string): Date {
   return date;
 }
 
+function roundHours(hours: number): number {
+  return Math.round(hours * 10) / 10;
+}
+
+function getWeeklyCategory(content: string): string {
+  const category = content.split(/[|｜]/, 1)[0]?.trim();
+  return category || content.trim() || '未分類';
+}
+
 export const calculateWeekTotals = (tasks: TaskInput[]): WeekTotal[] => {
   const totals = new Map<string, WeekTotal>();
 
@@ -156,10 +165,17 @@ export const calculateWeekTotals = (tasks: TaskInput[]): WeekTotal[] => {
     weekEndDate.setDate(weekEndDate.getDate() + 7);
 
     const weekStart = formatDateKey(weekStartDate);
+    const category = getWeeklyCategory(task.content);
     const existing = totals.get(weekStart);
 
     if (existing) {
       existing.totalHours += task.durationHours;
+      const existingCategory = existing.categories.find((item) => item.category === category);
+      if (existingCategory) {
+        existingCategory.totalHours += task.durationHours;
+      } else {
+        existing.categories.push({ category, totalHours: task.durationHours });
+      }
       return;
     }
 
@@ -168,13 +184,25 @@ export const calculateWeekTotals = (tasks: TaskInput[]): WeekTotal[] => {
       weekEnd: formatDateKey(weekEndDate),
       displayRange: `${formatShortDate(weekStartDate)} 6:00-${formatShortDate(weekEndDate)} 5:59`,
       totalHours: task.durationHours,
+      categories: [{ category, totalHours: task.durationHours }],
     });
   });
 
   return Array.from(totals.values())
     .map((week) => ({
       ...week,
-      totalHours: Math.round(week.totalHours * 10) / 10,
+      totalHours: roundHours(week.totalHours),
+      categories: week.categories
+        .map((category) => ({
+          ...category,
+          totalHours: roundHours(category.totalHours),
+        }))
+        .sort((a, b) => {
+          if (b.totalHours !== a.totalHours) {
+            return b.totalHours - a.totalHours;
+          }
+          return a.category.localeCompare(b.category, 'ja');
+        }),
     }))
     .sort((a, b) => a.weekStart.localeCompare(b.weekStart));
 };

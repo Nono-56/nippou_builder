@@ -46,12 +46,23 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({ tasks }) => {
             <strong>{latestWeekTotal.totalHours}h</strong>
             <span className="week-summary-range">({latestWeekTotal.displayRange})</span>
           </div>
+          <ul className="week-category-list" aria-label="最新週の分類別合計">
+            {latestWeekTotal.categories.map((category) => (
+              <li key={category.category}>
+                <span>{category.category}</span>
+                <strong>{category.totalHours}h</strong>
+              </li>
+            ))}
+          </ul>
           {weekTotals.length > 1 ? (
             <ul className="week-total-list" aria-label="週別合計">
               {weekTotals.map((week) => (
                 <li key={week.weekStart}>
                   <span>{week.displayRange}</span>
                   <strong>{week.totalHours}h</strong>
+                  <span className="week-total-breakdown">
+                    {week.categories.map((category) => `${category.category}: ${category.totalHours}h`).join(' / ')}
+                  </span>
                 </li>
               ))}
             </ul>
