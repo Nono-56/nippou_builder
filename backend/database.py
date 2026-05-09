@@ -12,8 +12,15 @@ def get_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def ensure_db_dir():
+    db_dir = os.path.dirname(DB_PATH)
+    if db_dir:
+        os.makedirs(db_dir, exist_ok=True)
+
+
 @contextmanager
 def get_conn():
+    ensure_db_dir()
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL")

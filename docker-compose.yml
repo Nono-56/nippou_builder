@@ -8,7 +8,7 @@ services:
     environment:
       - DB_PATH=/data/nippou.db
     volumes:
-      - ./data:/data
+      - nippou_data:/data
     expose:
       - "8000"
     healthcheck:
@@ -28,4 +28,7 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+
+volumes:
+  nippou_data:
 

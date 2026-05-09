@@ -27,7 +27,7 @@ docker compose up --build -d
 APP_PORT=8001
 ```
 
-SQLite の実ファイルはローカルの `./data/nippou.db` に保存されます。コンテナを作り直しても、このファイルは手元に残ります。
+SQLite は Docker named volume の `nippou_data` に保存されます。コンテナを作り直しても、この volume を削除しない限り DB は保持されます。
 
 ## 開発
 
