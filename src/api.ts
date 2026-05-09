@@ -25,34 +25,6 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   return payload as T;
 }
 
-export function connectSync(syncCode: string): Promise<SyncTasksResponse> {
-  return request<SyncTasksResponse>('/api/sync/connect', {
-    method: 'POST',
-    body: { syncCode },
-  });
-}
-
-export function fetchTasks(syncCode: string): Promise<SyncTasksResponse> {
-  const params = new URLSearchParams({ syncCode });
-  return request<SyncTasksResponse>(`/api/tasks?${params.toString()}`);
-}
-
-export function createTask(syncCode: string, task: TaskInput): Promise<SyncTasksResponse> {
-  return request<SyncTasksResponse>('/api/tasks', {
-    method: 'POST',
-    body: { syncCode, task },
-  });
-}
-
-export function removeTask(syncCode: string, taskId: string): Promise<SyncTasksResponse> {
-  const params = new URLSearchParams({ syncCode });
-  return request<SyncTasksResponse>(`/api/tasks/${encodeURIComponent(taskId)}?${params.toString()}`, {
-    method: 'DELETE',
-  });
-}
-
-// --- Username-based API ---
-
 export function fetchTasksByUsername(username: string): Promise<SyncTasksResponse> {
   return request<SyncTasksResponse>(`/api/u/${encodeURIComponent(username)}/tasks`);
 }

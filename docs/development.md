@@ -4,91 +4,43 @@
 
 ```bash
 npm install
+copy .env.example .env
 ```
 
 ## ローカル開発
 
-### フロントエンドのみ（API不使用）
+フロントエンドだけを確認する場合:
 
 ```bash
 npm run dev
 ```
 
-`http://localhost:4321` でアクセス可能。APIは使えないのでローカルモードのみ動作。
-
-### Cloudflare Functions + D1込みで開発
+Docker で API と Nginx も含めて確認する場合:
 
 ```bash
-# DBの初期化（初回のみ）
-npm run db:migrate:local
-
-# ビルド + Wranglerでローカル起動
-npm run cf:dev
+docker compose up --build
 ```
 
-`http://localhost:8788` でアクセス可能。D1データベースも使える。
+既定の確認先は `http://localhost:8001` です。
 
 ## スクリプト一覧
 
 | コマンド | 説明 |
-|--------|------|
-| `npm run dev` | Astro開発サーバー起動 |
-| `npm run build` | 本番ビルド |
+| --- | --- |
+| `npm run dev` | Astro 開発サーバー起動 |
+| `npm run dev:5001` | Astro 開発サーバーを 127.0.0.1:5001 で起動 |
+| `npm run build` | 本番用静的ビルド |
 | `npm run preview` | 本番ビルドのプレビュー |
-| `npm run cf:dev` | ビルド後、Wranglerでローカル起動（Functions対応） |
-| `npm run cf:deploy` | Cloudflare Pagesへデプロイ |
-| `npm run db:migrate:local` | ローカルD1 DBにマイグレーション適用 |
+| `npm test` | 現状は自動テスト未設定メッセージを表示 |
 
 ## デプロイ
 
-```bash
-npm run cf:deploy
-```
+Dokploy でこのリポジトリを Docker Compose アプリとしてデプロイします。
 
-デプロイ先: Cloudflare Pages（`wrangler.toml` の設定に従う）
+- `.env` の `APP_PORT` は既定で `8001`
+- ラズパイ側 Cloudflare Tunnel は `http://localhost:8001` に向ける
+- Cloudflare Tunnel の token や hostname はリポジトリでは管理しない
 
-### 本番DBのマイグレーション
+## DB
 
-```bash
-wrangler d1 execute nippou-builder-db --file=migrations/0001_init.sql
-```
-
-## 設定ファイル
-
-### wrangler.toml
-
-| 設定 | 値 |
-|-----|-----|
-| 互換日 | 2025-09-15 |
-| D1バインディング名 | `nippou-builder-db` |
-| アセットディレクトリ | `./dist` |
-| Database ID | `49c30d41-2b6b-4405-b66b-9cb3b56235c9` |
-
-### tsconfig.json
-
-| 設定 | 値 |
-|-----|-----|
-| ターゲット | ESNext |
-| モジュール解決 | bundler |
-| パスエイリアス | `@/*` → `src/*` |
-| JSX | react-jsx |
-| Strict | true |
-
-## マイグレーション
-
-DBスキーマの変更は `migrations/` にSQLファイルを追加して管理します。
-
-```
-migrations/
-├── 0001_init.sql           # 初期スキーマ（sync_spaces, tasks テーブル）
-└── 0002_add_username.sql   # sync_spaces に username カラム追加（ユーザーモード対応）
-```
-
-新しいマイグレーションファイルは連番で追加してください（`0003_xxx.sql` など）。
-
-### 本番DBへのマイグレーション適用
-
-```bash
-wrangler d1 execute nippou-builder-db --file=migrations/0001_init.sql
-wrangler d1 execute nippou-builder-db --file=migrations/0002_add_username.sql
-```
+SQLite は `./data/nippou.db` に保存します。FastAPI 起動時に必要なテーブルとインデックスを作成します。

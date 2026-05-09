@@ -1,237 +1,83 @@
-# API仕様
+# API 仕様
 
-すべてのエンドポイントは Cloudflare Pages Functions として `functions/api/` に実装されています。
+API は FastAPI として `backend/` に実装されています。レスポンスの時刻は ISO 8601 文字列です。
 
-## エンドポイント一覧
+## Health
 
-### POST `/api/sync/connect`
+### GET `/health`
 
-同期接続の確立。共有コードに対応する sync_space を作成または取得し、全タスクを返す。
-
-**リクエストボディ**
 ```json
-{ "syncCode": "任意の共有コード文字列" }
+{ "status": "ok" }
 ```
-
-**レスポンス**
-```json
-{
-  "tasks": [/* Task[] */],
-  "lastSyncedAt": "2024-01-15T10:30:00.000Z"
-}
-```
-
----
-
-### GET `/api/tasks`
-
-指定した共有コードに紐づく全タスクを取得する。
-
-**クエリパラメーター**
-| パラメーター | 型 | 必須 | 説明 |
-|------------|-----|------|------|
-| `syncCode` | string | ✓ | 共有コード |
-
-**レスポンス**
-```json
-{
-  "tasks": [/* Task[] */],
-  "lastSyncedAt": "2024-01-15T10:30:00.000Z"
-}
-```
-
----
-
-### POST `/api/tasks`
-
-タスクを作成する。
-
-**リクエストボディ**
-```json
-{
-  "syncCode": "共有コード",
-  "task": {
-    "date": "2024-01-15",
-    "startTime": "09:00",
-    "endTime": "10:30",
-    "content": "MTGに参加"
-  }
-}
-```
-
-**レスポンス**
-```json
-{
-  "tasks": [/* 作成後の全Task[] */],
-  "lastSyncedAt": "2024-01-15T10:30:00.000Z"
-}
-```
-
----
-
-### DELETE `/api/tasks/[id]`
-
-指定IDのタスクを削除する。
-
-**パスパラメーター**
-| パラメーター | 型 | 説明 |
-|------------|-----|------|
-| `id` | number | タスクID |
-
-**クエリパラメーター**
-| パラメーター | 型 | 必須 | 説明 |
-|------------|-----|------|------|
-| `syncCode` | string | ✓ | 共有コード（権限確認に使用） |
-
-**レスポンス**
-```json
-{
-  "tasks": [/* 削除後の全Task[] */],
-  "lastSyncedAt": "2024-01-15T10:30:00.000Z"
-}
-```
-
----
-
----
 
 ## ユーザー管理 API
 
 ### GET `/api/users`
 
-全ユーザーの一覧を取得する。
-
-**レスポンス**
 ```json
-{ "users": [/* UserRecord[] */] }
+{ "users": [{ "id": "uuid", "username": "alice", "createdAt": "2026-05-09T00:00:00.000Z" }] }
 ```
-
----
 
 ### POST `/api/users`
 
-新しいユーザーを作成する。
-
-**リクエストボディ**
 ```json
 { "username": "alice" }
 ```
 
-- 英数字・ハイフン・アンダースコアのみ使用可（3〜32文字）
+ユーザー名は英数字・ハイフン・アンダースコアで 3〜32 文字です。
 
-**レスポンス** (`201 Created`)
-```json
-{ "user": /* UserRecord */ }
-```
+### DELETE `/api/users/{username}`
 
----
-
-### DELETE `/api/users/[username]`
-
-指定ユーザーを削除する（タスクも CASCADE 削除）。
-
-**パスパラメーター**
-| パラメーター | 型 | 説明 |
-|------------|-----|------|
-| `username` | string | ユーザー名 |
-
-**レスポンス**
 ```json
 { "success": true }
 ```
 
----
+ユーザーを削除すると、そのユーザーのタスクも削除されます。
 
-## ユーザーモード タスク API
+## ユーザー別タスク API
 
-### GET `/api/u/[username]/tasks`
+### GET `/api/u/{username}/tasks`
 
-指定ユーザーの全タスクを取得する。
-
-**レスポンス**
 ```json
 {
-  "tasks": [/* Task[] */],
-  "lastSyncedAt": "2024-01-15T10:30:00.000Z"
+  "tasks": [
+    {
+      "id": "uuid",
+      "date": "2026-05-09",
+      "startTime": "09:00",
+      "endTime": "10:30",
+      "content": "実装"
+    }
+  ],
+  "lastSyncedAt": "2026-05-09T00:00:00.000Z"
 }
 ```
 
----
+### POST `/api/u/{username}/tasks`
 
-### POST `/api/u/[username]/tasks`
-
-指定ユーザーにタスクを作成する。
-
-**リクエストボディ**
 ```json
 {
   "task": {
-    "date": "2024-01-15",
+    "id": "uuid",
+    "date": "2026-05-09",
     "startTime": "09:00",
     "endTime": "10:30",
-    "content": "MTGに参加"
+    "content": "実装"
   }
 }
 ```
 
-**レスポンス**
+### DELETE `/api/u/{username}/tasks/{task_id}`
+
 ```json
 {
-  "tasks": [/* 作成後の全Task[] */],
-  "lastSyncedAt": "2024-01-15T10:30:00.000Z"
-}
-```
-
----
-
-### DELETE `/api/u/[username]/tasks/[id]`
-
-指定ユーザーの指定タスクを削除する。
-
-**レスポンス**
-```json
-{
-  "tasks": [/* 削除後の全Task[] */],
-  "lastSyncedAt": "2024-01-15T10:30:00.000Z"
-}
-```
-
----
-
-## Task オブジェクト
-
-```ts
-interface Task {
-  id: number;
-  date: string;        // YYYY-MM-DD
-  startTime: string;   // HH:MM
-  endTime: string;     // HH:MM
-  content: string;
-  createdAt: string;   // ISO 8601
-  updatedAt: string;   // ISO 8601
-}
-```
-
-## UserRecord オブジェクト
-
-```ts
-interface UserRecord {
-  id: string;
-  username: string;
-  createdAt: string;  // ISO 8601
+  "tasks": [],
+  "lastSyncedAt": "2026-05-09T00:00:00.000Z"
 }
 ```
 
 ## エラーレスポンス
 
-すべてのエンドポイントは、エラー時に HTTP 4xx/5xx と以下のボディを返します。
-
 ```json
 { "error": "エラーメッセージ" }
 ```
-
-| ステータス | 条件 |
-|----------|------|
-| 400 | リクエストパラメーター不正 |
-| 404 | タスクが存在しない |
-| 500 | サーバー内部エラー |

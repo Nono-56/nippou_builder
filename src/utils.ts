@@ -1,4 +1,4 @@
-import type { TaskInput, ParsedTask, GroupedTask, DateGroup } from './types';
+import type { TaskInput, ParsedTask, GroupedTask, DateGroup, WeekTotal } from './types';
 
 function parseTimeToMinutes(timeStr: string): number {
   if (!timeStr) return 0;
@@ -122,4 +122,59 @@ export const formatReport = (groups: DateGroup[], includeDate: boolean): string 
   });
 
   return out.trim();
+};
+
+function parseDateParts(date: string): Date {
+  const [year, month, day] = date.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
+function formatDateKey(date: Date): string {
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function formatShortDate(date: Date): string {
+  return `${date.getMonth() + 1}/${date.getDate()}`;
+}
+
+function getWeekStartDate(logicalDate: string): Date {
+  const date = parseDateParts(logicalDate);
+  const daysSinceMonday = (date.getDay() + 6) % 7;
+  date.setDate(date.getDate() - daysSinceMonday);
+  return date;
+}
+
+export const calculateWeekTotals = (tasks: TaskInput[]): WeekTotal[] => {
+  const totals = new Map<string, WeekTotal>();
+
+  tasks.map(parseTask).forEach((task) => {
+    const weekStartDate = getWeekStartDate(task.logicalDate);
+    const weekEndDate = new Date(weekStartDate);
+    weekEndDate.setDate(weekEndDate.getDate() + 7);
+
+    const weekStart = formatDateKey(weekStartDate);
+    const existing = totals.get(weekStart);
+
+    if (existing) {
+      existing.totalHours += task.durationHours;
+      return;
+    }
+
+    totals.set(weekStart, {
+      weekStart,
+      weekEnd: formatDateKey(weekEndDate),
+      displayRange: `${formatShortDate(weekStartDate)} 6:00-${formatShortDate(weekEndDate)} 5:59`,
+      totalHours: task.durationHours,
+    });
+  });
+
+  return Array.from(totals.values())
+    .map((week) => ({
+      ...week,
+      totalHours: Math.round(week.totalHours * 10) / 10,
+    }))
+    .sort((a, b) => a.weekStart.localeCompare(b.weekStart));
 };

@@ -36,3 +36,10 @@ export type DateGroup = {
   displayDate: string;
   tasks: GroupedTask[];
 };
+
+export type WeekTotal = {
+  weekStart: string;
+  weekEnd: string;
+  displayRange: string;
+  totalHours: number;
+};

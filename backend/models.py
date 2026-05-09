@@ -1,18 +1,5 @@
 import re
 from pydantic import BaseModel, field_validator
-from typing import Optional
-
-
-class ConnectRequest(BaseModel):
-    syncCode: str
-
-    @field_validator("syncCode")
-    @classmethod
-    def validate_sync_code(cls, v: str) -> str:
-        v = v.strip()
-        if not (3 <= len(v) <= 64):
-            raise ValueError("共有コードは 3 文字以上 64 文字以下で入力してください。")
-        return v
 
 
 class TaskInput(BaseModel):
@@ -42,19 +29,6 @@ class TaskInput(BaseModel):
         v = v.strip()
         if not (1 <= len(v) <= 500):
             raise ValueError("内容は 1 文字以上 500 文字以下で入力してください。")
-        return v
-
-
-class CreateTaskRequest(BaseModel):
-    syncCode: str
-    task: TaskInput
-
-    @field_validator("syncCode")
-    @classmethod
-    def validate_sync_code(cls, v: str) -> str:
-        v = v.strip()
-        if not (3 <= len(v) <= 64):
-            raise ValueError("共有コードが不正です。")
         return v
 
 

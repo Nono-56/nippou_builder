@@ -8,12 +8,6 @@
     "dev:5001": "astro dev --host 127.0.0.1 --port 5001",
     "build": "astro build",
     "preview": "astro preview",
-    "cf:dev": "astro build && node ./scripts/clear-wrangler-deploy.cjs && wrangler pages dev ./dist",
-    "cf:dev:5001": "astro build && node ./scripts/clear-wrangler-deploy.cjs && wrangler pages dev ./dist --ip 127.0.0.1 --port 5001",
-    "cf:deploy": "astro build && wrangler pages deploy ./dist",
-    "tunnel:quick": "cloudflared tunnel --url http://localhost:5001",
-    "db:migrate:local": "wrangler d1 execute nippou-builder-db --local --file=./migrations/0001_init.sql && wrangler d1 execute nippou-builder-db --local --file=./migrations/0002_add_username.sql",
-    "db:migrate:remote": "wrangler d1 execute nippou-builder-db --file=./migrations/0001_init.sql && wrangler d1 execute nippou-builder-db --file=./migrations/0002_add_username.sql",
     "test": "echo \"No automated tests configured\""
   },
   "repository": {
@@ -28,7 +22,6 @@
   },
   "homepage": "https://github.com/Nono-56/nippou_builder#readme",
   "dependencies": {
-    "@astrojs/cloudflare": "^13.1.10",
     "@astrojs/react": "^5.0.3",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
@@ -38,8 +31,5 @@
     "react-dom": "^19.2.5",
     "typescript": "^5.9.3"
   },
-  "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260418.1",
-    "wrangler": "^4.83.0"
-  }
+  "devDependencies": {}
 }

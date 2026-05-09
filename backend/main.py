@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
@@ -29,42 +29,6 @@ async def validation_exception_handler(request, exc):
 @app.get("/health")
 def health():
     return {"status": "ok"}
-
-
-# ── Sync connect ───────────────────────────────────────────────
-
-@app.post("/api/sync/connect")
-def sync_connect(body: models.ConnectRequest):
-    return db.get_or_create_space(body.syncCode)
-
-
-# ── Tasks (sync-code-based) ────────────────────────────────────
-
-@app.get("/api/tasks")
-def get_tasks(syncCode: str = Query(...)):
-    try:
-        code = models.ConnectRequest(syncCode=syncCode).syncCode
-    except Exception:
-        raise HTTPException(status_code=400, detail="共有コードが不正です。")
-    result = db.require_space_by_code(code)
-    return result if result else {"tasks": [], "lastSyncedAt": None}
-
-
-@app.post("/api/tasks")
-def create_task(body: models.CreateTaskRequest):
-    return db.insert_task_by_code(body.syncCode, body.task.model_dump())
-
-
-@app.delete("/api/tasks/{task_id}")
-def delete_task(task_id: str, syncCode: str = Query(...)):
-    try:
-        code = models.ConnectRequest(syncCode=syncCode).syncCode
-    except Exception:
-        raise HTTPException(status_code=400, detail="共有コードが不正です。")
-    if not task_id.strip():
-        raise HTTPException(status_code=400, detail="削除対象のタスク ID が不正です。")
-    result = db.delete_task_by_code(code, task_id.strip())
-    return result if result else {"tasks": [], "lastSyncedAt": None}
 
 
 # ── Username-based tasks ───────────────────────────────────────
